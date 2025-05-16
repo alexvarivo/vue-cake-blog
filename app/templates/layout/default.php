@@ -27,9 +27,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     </title>
     <?= $this->Html->meta('icon') ?>
 
-    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
-
-    <?= $this->Html->css(['normalize.min', 'milligram.min', 'cake']) ?>
+    <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake']) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
@@ -41,8 +39,9 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
             <a href="<?= $this->Url->build('/') ?>"><span>Cake</span>PHP</a>
         </div>
         <div class="top-nav-links">
-            <a target="_blank" rel="noopener" href="https://book.cakephp.org/4/">Documentation</a>
+            <a target="_blank" rel="noopener" href="https://book.cakephp.org/5/">Documentation</a>
             <a target="_blank" rel="noopener" href="https://api.cakephp.org/">API</a>
+            <?= $this->Html->link('Logout', ['controller' => 'Users', 'action' => 'logout']) ?>
         </div>
     </nav>
     <main class="main">

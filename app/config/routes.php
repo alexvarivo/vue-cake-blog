@@ -24,7 +24,12 @@
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
-return static function (RouteBuilder $routes) {
+/*
+ * This file is loaded in the context of the `Application` class.
+ * So you can use `$this` to reference the application class instance
+ * if required.
+ */
+return function (RouteBuilder $routes): void {
     /*
      * The default class to use for all routes
      *
@@ -44,7 +49,7 @@ return static function (RouteBuilder $routes) {
      */
     $routes->setRouteClass(DashedRoute::class);
 
-    $routes->scope('/', function (RouteBuilder $builder) {
+    $routes->scope('/', function (RouteBuilder $builder): void {
         /*
          * Here, we are connecting '/' (base path) to a controller called 'Pages',
          * its action called 'display', and we pass a param to select the view file
@@ -67,8 +72,8 @@ return static function (RouteBuilder $routes) {
          * $builder->connect('/{controller}/{action}/*', []);
          * ```
          *
-         * You can remove these routes once you've connected the
-         * routes you want in your application.
+         * It is NOT recommended to use fallback routes after your initial prototyping phase!
+         * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method for more information
          */
         $builder->fallbacks();
     });
@@ -78,7 +83,7 @@ return static function (RouteBuilder $routes) {
      * open new scope and define routes there.
      *
      * ```
-     * $routes->scope('/api', function (RouteBuilder $builder) {
+     * $routes->scope('/api', function (RouteBuilder $builder): void {
      *     // No $builder->applyMiddleware() here.
      *
      *     // Parse specified extensions from URLs
