@@ -1,4 +1,4 @@
-# Full-Stack Blog App (CakePHP + Vue.js)
+# VueJS Frontend for CakePHP Blog
 
 ## Overview
 This is a full-stack blog application built using CakePHP 4.x for the backend and Vue.js for the frontend. It includes:
