@@ -16,6 +16,8 @@ declare(strict_types=1);
  */
 namespace App;
 
+use App\Middleware\CorsMiddleware;
+
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Datasource\FactoryLocator;
@@ -27,14 +29,20 @@ use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
+use Cake\Routing\Route\Route;
+use Cake\Utility\Security;
+
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\Middleware\AuthenticationMiddleware;
-use Psr\Http\Message\ServerRequestInterface;
-// use Authentication\Identifier\IdentifierInterface;
 use Authentication\Authenticator\SessionAuthenticator;
 use Authentication\Authenticator\FormAuthenticator;
+//use Authentication\Identifier\IdentifierInterface;
+
+
+use Psr\Http\Message\ServerRequestInterface;
 use App\Console\Command\ListUsersCommand;
+use Firebase\JWT\JWT;
 
 /**
  * Application setup class.
@@ -74,34 +82,26 @@ class Application extends BaseApplication implements \Authentication\Authenticat
      */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
-        $middlewareQueue
-            // Catch any exceptions in the lower layers,
-            // and make an error page/response
-            ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
+        $middlewareQueue->add(new CorsMiddleware());
 
-            // Handle plugin/theme assets like CakePHP normally does.
+        $csrf = new CsrfProtectionMiddleware([
+            'httponly' => true,
+        ]);
+
+        $csrf->skipCheckCallback(function ($request) {
+            $path = $request->getPath();
+            return $path === '/users/login' || str_starts_with($path, '/articles');
+        });
+
+        $middlewareQueue
+            ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
             ->add(new AssetMiddleware([
                 'cacheTime' => Configure::read('Asset.cacheTime'),
             ]))
-
-            // Add routing middleware.
-            // If you have a large number of routes connected, turning on routes
-            // caching in production could improve performance.
-            // See https://github.com/CakeDC/cakephp-cached-routing
             ->add(new RoutingMiddleware($this))
-
             ->add(new AuthenticationMiddleware($this))
-
-            // Parse various types of encoded request bodies so that they are
-            // available as array through $request->getData()
-            // https://book.cakephp.org/5/en/controllers/middleware.html#body-parser-middleware
             ->add(new BodyParserMiddleware())
-
-            // Cross Site Request Forgery (CSRF) Protection Middleware
-            // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
-            ->add(new CsrfProtectionMiddleware([
-                'httponly' => true,
-            ]));
+            ->add($csrf); // ← CSRF middleware
 
         return $middlewareQueue;
     }
@@ -122,22 +122,34 @@ class Application extends BaseApplication implements \Authentication\Authenticat
     {
         $service = new AuthenticationService();
 
-        // Load identifiers
+        // load identifier with hasher config
         $service->loadIdentifier('Authentication.Password', [
             'fields' => [
                 'username' => 'username',
                 'password' => 'password',
-            ]
+            ],
+            'resolver' => [
+                'className' => 'Authentication.Orm',
+            ],
         ]);
 
-        // Load authenticators
-        $service->loadAuthenticator('Authentication.Session');
+        // load authenticators
+        $service->loadAuthenticator('Authentication.Jwt', [
+            'secretKey' => env('SECURITY_SALT', 'fallback_secret_key'),
+            'algorithm' => 'HS256',
+            'header' => 'authorization',
+            'tokenPrefix' => 'Bearer',
+            'queryParam' => 'token',
+            'inputType' => 'json',
+        ]);
+
         $service->loadAuthenticator('Authentication.Form', [
             'fields' => [
                 'username' => 'username',
                 'password' => 'password',
             ],
             'loginUrl' => '/users/login',
+            'inputType' => 'json',
         ]);
 
         return $service;

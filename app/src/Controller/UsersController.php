@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use Firebase\JWT\JWT;
+use Cake\Utility\Security;
+
 /**
  * Users Controller
  *
@@ -18,9 +21,13 @@ class UsersController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        
+
         $this->loadComponent('Authentication.Authentication');
-        $this->Authentication->allowUnauthenticated(['login']);
+
+        // make sure unauthenticated users can access login
+        if ($this->request->getParam('action') === 'login' || $this->request->getParam('action') === 'createTestUser') {
+            $this->Authentication->allowUnauthenticated(['login', 'createTestUser']);
+        }
     }
 
     /**
@@ -118,21 +125,31 @@ class UsersController extends AppController
      */
     public function login()
     {
-        $this->request->allowMethod(['get', 'post']);
-        $result = $this->Authentication->getResult();
+        $this->request->allowMethod(['post']);
+
+        // DEBUG
+        file_put_contents('/tmp/debug_login_input.txt', json_encode($this->request->getData()));
+
+        $authService = $this->Authentication->getAuthenticationService();
+        $result = $authService->authenticate($this->request);
+        
         if ($result->isValid()) {
-            $this->Flash->success(__('Login successful'));
-            $redirect = $this->Authentication->getLoginRedirect();
-            if ($redirect) {
-                return $this->redirect($redirect);
-            }
-            return $this->redirect(['controller' => 'Articles', 'action' => 'index']);
+	    $user = $result->getData();
+	    
+            $payload = [
+	        'sub' => $user->id,
+		'exp' => time() + 604800, 
+	    ];
+
+            $jwt = JWT::encode($payload, Security::getSalt(), 'HS256');
+
+	    return $this->response->withType('application/json')
+	        ->withStringBody(json_encode(['token' => $jwt]));
         }
 
-        // Display error if user submitted and authentication failed
-        if ($this->request->is('post')) {
-            $this->Flash->error(__('Invalid username or password'));
-        }
+	return $this->response->withStatus(401)
+	    ->withType('application/json')
+	    ->withStringBody(json_encode(['error' => 'Invalid username or password']));
     }
     
     public function logout()
@@ -144,5 +161,26 @@ class UsersController extends AppController
         }
 
         return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+    }
+    
+    public function createTestUser()
+    {
+        $this->Users->deleteAll(['username' => 'admin']); // temp
+
+        $existing = $this->Users->find()->where(['username' => 'admin'])->first();
+        if ($existing) {
+            return $this->response->withStringBody('Test user already exists.');
+        }
+
+        $user = $this->Users->newEmptyEntity();
+        $user->username = 'admin';
+        $user->password = 'admin123'; // will be auto-hashed
+        $user->created = $user->modified = date('Y-m-d H:i:s');
+
+        if ($this->Users->save($user)) {
+            return $this->response->withStringBody('Test user created successfully.');
+        }
+
+        return $this->response->withStringBody('Failed to create test user.');
     }
 }

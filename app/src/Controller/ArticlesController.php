@@ -14,109 +14,93 @@ class ArticlesController extends AppController
     {
         parent::initialize();
         $this->loadComponent('Authentication.Authentication');
-        
-        $this->Authentication->allowUnauthenticated(['index', 'view']);
+
+        // Public access
+        $this->Authentication->addUnauthenticatedActions(['index', 'view']);
     }
 
-    /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
+    // GET /articles
     public function index()
     {
-        $query = $this->Articles->find();
-        $articles = $this->paginate($query);
+        $articles = $this->Articles->find()->all();
 
-        $this->set(compact('articles'));
+        $this->response = $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($articles));
+
+        return $this->response;
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id Article id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
+    // GET /articles/:id
     public function view($id = null)
     {
-        $article = $this->Articles->get($id, contain: []);
-        $this->set(compact('article'));
+        $this->request->allowMethod(['get']);
+
+        try {
+            $article = $this->Articles->get($id);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
+            return $this->response
+                ->withStatus(404)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Article not found']));
+        }
+    
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode(['article' => $article]));
     }
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
+    // POST /articles/add
     public function add()
     {
+        $this->request->allowMethod(['post']);
+
+        $result = $this->Authentication->getResult();
+        if (!$result->isValid()) {
+            return $this->response
+                ->withStatus(401)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Unauthorized']));
+        }
+
         $article = $this->Articles->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $article = $this->Articles->patchEntity($article, $this->request->getData(), [
-                'associated' => ['Tags']
-            ]);
-            // Set a temporary user ID for testing
-            $article->user_id = 1;
+        $article = $this->Articles->patchEntity($article, $this->request->getData());
 
-            if ($this->Articles->save($article)) {
-                $this->Flash->success(__('The article has been saved.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('The article could not be saved. Please, try again.'));
+        if ($this->Articles->save($article)) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode(['message' => 'Article saved']));
         }
 
-        $tags = $this->Articles->Tags->find('list')->all();
-        $this->set(compact('article', 'tags'));
+        return $this->response
+            ->withStatus(400)
+            ->withType('application/json')
+            ->withStringBody(json_encode(['error' => 'Failed to save article']));
     }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Article id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function edit($id = null)
-    {
-        $article = $this->Articles->get($id, [
-            'contain' => ['Tags'],
-        ]);
-
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $article = $this->Articles->patchEntity($article, $this->request->getData(), [
-                'associated' => ['Tags']
-            ]);
-            if ($this->Articles->save($article)) {
-                $this->Flash->success(__('The article has been updated.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('The article could not be updated. Please, try again.'));
-        }
-
-        $tags = $this->Articles->Tags->find('list')->all();
-        $this->set(compact('article', 'tags'));
-    }
-
-    /**
-     * Delete method
-     *
-     * @param string|null $id Article id.
-     * @return \Cake\Http\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
+    // DELETE /articles/:id
     public function delete($id = null)
     {
-        $this->request->allowMethod(['post', 'delete']);
-        $article = $this->Articles->get($id);
-        if ($this->Articles->delete($article)) {
-            $this->Flash->success(__('The article has been deleted.'));
-        } else {
-            $this->Flash->error(__('The article could not be deleted. Please, try again.'));
+        $this->request->allowMethod(['delete']);
+
+        $result = $this->Authentication->getResult();
+        if (!$result->isValid()) {
+            return $this->response
+                ->withStatus(401)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Unauthorized']));
         }
 
-        return $this->redirect(['action' => 'index']);
+        $article = $this->Articles->get($id);
+        if ($this->Articles->delete($article)) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode(['message' => 'Article deleted']));
+        }
+
+        return $this->response
+            ->withStatus(400)
+            ->withType('application/json')
+            ->withStringBody(json_encode(['error' => 'Failed to delete article']));
     }
 }

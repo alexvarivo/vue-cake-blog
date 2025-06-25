@@ -1,5 +1,14 @@
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# enable mod_rewrite globally 
+RewriteEngine On
+
+# forward Authorization header to PHP
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
