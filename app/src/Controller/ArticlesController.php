@@ -15,7 +15,7 @@ class ArticlesController extends AppController
         parent::initialize();
         $this->loadComponent('Authentication.Authentication');
 
-        // Public access
+        // public access
         $this->Authentication->addUnauthenticatedActions(['index', 'view']);
     }
 

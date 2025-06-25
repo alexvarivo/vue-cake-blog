@@ -82,8 +82,6 @@ class Application extends BaseApplication implements \Authentication\Authenticat
      */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
-        $middlewareQueue->add(new CorsMiddleware());
-
         $csrf = new CsrfProtectionMiddleware([
             'httponly' => true,
         ]);
@@ -94,6 +92,7 @@ class Application extends BaseApplication implements \Authentication\Authenticat
         });
 
         $middlewareQueue
+            ->add(new CorsMiddleware());
             ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
             ->add(new AssetMiddleware([
                 'cacheTime' => Configure::read('Asset.cacheTime'),
