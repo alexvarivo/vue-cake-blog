@@ -1,68 +1,46 @@
-# VueJS Frontend for CakePHP Blog
+# Vue + CakePHP Blog
 
-## Overview
-This is a full-stack blog application built using CakePHP 4.x for the backend and Vue.js for the frontend. It includes:
-- JWT-based user authentication
-- Article creation and viewing
-- Dockerized backend setup
+Full-stack blog app with a CakePHP 4 backend and Vue 3 frontend.
 
 ## Features
-
-### Backend (CakePHP 4.x)
-- JWT login and authentication
-- REST-style API for articles
-- CORS middleware support
-- Auth-protected endpoints
-- MySQL database + PhpMyAdmin
-
-### Frontend (Vue 3 + Vite)
-- Login and token handling with `localStorage`
-- View all articles
-- View article details
-- Create new articles (auth required)
-- Frontend route protection based on login state
-
-## Project Structure
-cakephp-proj/
-├── app/ # CakePHP backend
-├── config/ # Backend configuration
-├── docker-compose.yml # Docker setup
-├── vue-frontend/ # Vue 3 frontend (Vite)
+- JWT login
+- Create, edit, and delete articles
+- Auth-protected routes on both frontend and backend
+- Dockerized backend with MariaDB
 
 ## Setup
 
-### Backend (CakePHP)
-1. Clone this repository:
+### Backend
+1. Clone the repo and copy the env file:
    ```bash
-   git clone https://github.com/alexvarivo/vue-cake-blog.git
-   cd vue-cake-blog
-2. Copy the environment config:
    cp .env.example .env
-3. Start the containers:
+   ```
+2. Start Docker:
+   ```bash
    docker compose up -d
-4. Enter the app container and install dependencies:
+   ```
+3. Run migrations:
+   ```bash
    docker compose exec app bash
-   composer install
    bin/cake migrations migrate
-5. Add a test user manually through PhpMyAdmin (http://localhost:8082):
-   - username: admin
-   - password hash: $2y$10$KHBtkVQGuvuNsafxqmUNH.MHNLU6xK36RhS.m8xZbYLuZbzqn63cS (for password admin123)
-   
-### Frontend (Vue.js)
-1. Navigate to the frontend:
-   cd vue-frontend
-2. Install dependencies:
-   npm install
-3. Start the dev server:
-   npm run dev
+   ```
+4. Create a user through PhpMyAdmin at http://localhost:8083
 
-### Usage
+### Frontend
+```bash
+cd vue-frontend
+npm install
+npm run dev
+```
+
+## URLs
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8081
-- PhpMyAdmin: http://localhost:8082
+- PhpMyAdmin: http://localhost:8083
 
-### Routes
-- GET /login — User login
-- GET /articles — View all articles
-- GET /view/:id — View article details
-- POST /add — Add article (auth required)
+## API Routes
+- `POST /users/login` — login
+- `GET /articles` — get all articles
+- `POST /articles/add` — create article (auth required)
+- `PUT /articles/edit/:id` — edit article (auth required)
+- `DELETE /articles/delete/:id` — delete article (auth required)

@@ -11,9 +11,9 @@
         <textarea v-model="body" required></textarea>
       </div>
       <button type="submit">Save</button>
-      <router-link to="/articles">Cancel</router-link>
+      <router-link to="/">Cancel</router-link>
     </form>
-    <p v-if="message" :class="success ? 'success' : 'error'">{{ message }}</p>
+    <p v-if="message" class="error">{{ message }}</p>
   </div>
 </template>
 
@@ -28,7 +28,6 @@ const router = useRouter();
 const title = ref('');
 const body = ref('');
 const message = ref('');
-const success = ref(false);
 
 onMounted(async () => {
     const { ok, data } = await apiRequest(`/articles/${route.params.id}`);
@@ -45,10 +44,9 @@ const submitEdit = async () => {
     }, true);
 
     if (ok) {
-        router.push('/articles');
+        router.push('/');
     } else {
         message.value = 'Failed to update article.';
-        success.value = false;
     }
 };
 </script>
