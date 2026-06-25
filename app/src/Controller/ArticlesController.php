@@ -17,7 +17,6 @@ class ArticlesController extends AppController
         $this->Authentication->addUnauthenticatedActions(['index', 'view']);
     }
 
-    // GET /articles
     public function index()
     {
         $this->request->allowMethod(['get']);
@@ -28,7 +27,6 @@ class ArticlesController extends AppController
             ->withStringBody(json_encode($articles));
     }
 
-    // GET /articles/:id
     public function view($id = null)
     {
         $this->request->allowMethod(['get']);
@@ -47,7 +45,6 @@ class ArticlesController extends AppController
             ->withStringBody(json_encode($article));
     }
 
-    // POST /articles/add
     public function add()
     {
         $this->request->allowMethod(['post']);
@@ -68,7 +65,6 @@ class ArticlesController extends AppController
             ->withStringBody(json_encode(['error' => 'Failed to save article', 'errors' => $article->getErrors()]));
     }
 
-    // PUT /articles/edit/:id
     public function edit($id = null)
     {
         $this->request->allowMethod(['put', 'patch']);
@@ -96,7 +92,6 @@ class ArticlesController extends AppController
             ->withStringBody(json_encode(['error' => 'Failed to update article', 'errors' => $article->getErrors()]));
     }
 
-    // DELETE /articles/:id
     public function delete($id = null)
     {
         $this->request->allowMethod(['delete']);

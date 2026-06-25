@@ -100,7 +100,7 @@ class Application extends BaseApplication implements \Authentication\Authenticat
             ->add(new RoutingMiddleware($this))
             ->add(new AuthenticationMiddleware($this))
             ->add(new BodyParserMiddleware())
-            ->add($csrf); // ← CSRF middleware
+            ->add($csrf);
 
         return $middlewareQueue;
     }
@@ -121,7 +121,6 @@ class Application extends BaseApplication implements \Authentication\Authenticat
     {
         $service = new AuthenticationService();
 
-        // load identifier with hasher config
         $service->loadIdentifier('Authentication.Password', [
             'fields' => [
                 'username' => 'username',
@@ -132,7 +131,6 @@ class Application extends BaseApplication implements \Authentication\Authenticat
             ],
         ]);
 
-        // load authenticators
         $service->loadAuthenticator('Authentication.Jwt', [
             'secretKey' => Security::getSalt(),
             'algorithm' => 'HS256',

@@ -18,7 +18,7 @@ export async function apiRequest(path, options = {}, auth = false) {
         const data = await res.json().catch(() => ({}));
         return { ok: res.ok, status: res.status, data };
     } catch (err) {
-        console.error('API request failed:', err);
+        console.error(err);
         return { ok: false, status: 0, data: { error: 'Network error' } };
     }
 }
