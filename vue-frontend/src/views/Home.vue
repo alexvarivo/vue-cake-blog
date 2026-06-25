@@ -1,69 +1,66 @@
 <template>
-  <div>
-    <h1>Articles</h1>
-    <ul>
+  <div class="articles">
+    <h2>Articles</h2>
+    <p v-if="error" class="error">{{ error }}</p>
+    <ul v-if="articles.length">
       <li v-for="article in articles" :key="article.id">
-        <strong>{{ article.title }}</strong><br />
-        {{ article.body }}<br />
-        <button @click="deleteArticle(article.id)">Delete</button>
+        <div class="article-header">
+          <strong>{{ article.title }}</strong>
+          <div class="actions">
+            <router-link :to="`/edit/${article.id}`">Edit</router-link>
+            <button @click="deleteArticle(article.id)">Delete</button>
+          </div>
+        </div>
+        <p>{{ article.body }}</p>
       </li>
-      <p v-if="message" style="color: green">{{ message }}</p>
     </ul>
+    <p v-else-if="!error">No articles yet.</p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { apiRequest } from '../api';
 
 const articles = ref([]);
-const message = ref('');
+const error = ref('');
 
-const fetchArticles = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:8081/articles', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      articles.value = data;
+onMounted(async () => {
+    const { ok, data } = await apiRequest('/articles');
+    if (ok) {
+        articles.value = data;
     } else {
-      console.error('Failed to fetch articles.');
+        error.value = 'Failed to load articles.';
     }
-  } catch (error) {
-    console.error('Error fetching articles:', error);
-  }
-};
+});
 
 const deleteArticle = async (id) => {
-  if (!confirm('Are you sure you want to delete this article?')) return;
+    if (!confirm('Delete this article?')) return;
 
-  try {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`http://localhost:8081/articles/delete/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (res.ok) {
-      // remove deleted article from the list
-      articles.value = articles.value.filter(a => a.id !== id);
-      message.value = 'Article deleted successfully!';
-      setTimeout(() => {
-        message.value = '';
-    }, 3000); // clear after 3 seconds
+    const { ok } = await apiRequest(`/articles/delete/${id}`, { method: 'DELETE' }, true);
+    if (ok) {
+        articles.value = articles.value.filter(a => a.id !== id);
     } else {
-      console.error('Delete failed');
+        error.value = 'Failed to delete article.';
     }
-  } catch (err) {
-    console.error('Error deleting article:', err);
-  }
 };
-
-onMounted(fetchArticles);
 </script>
+
+<style scoped>
+.articles {
+    max-width: 600px;
+    margin: auto;
+}
+.article-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.actions {
+    display: flex;
+    gap: 8px;
+}
+.error {
+    color: red;
+}
+</style>

@@ -12,50 +12,40 @@
       </div>
       <button type="submit">Submit</button>
     </form>
-    <p v-if="message" :style="{ color: messageColor }">{{ message }}</p>
+    <p v-if="message" :class="success ? 'success' : 'error'">{{ message }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
+import { apiRequest } from '../api';
 
 const title = ref('');
 const body = ref('');
 const message = ref('');
-const messageColor = ref('green');
+const success = ref(false);
 
 const submitArticle = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    console.log("Sending token:", token);
+    message.value = '';
+    const { ok, data } = await apiRequest('/articles/add', {
+        method: 'POST',
+        body: JSON.stringify({ title: title.value, body: body.value }),
+    }, true);
 
-    const response = await fetch('http://localhost:8081/articles/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title: title.value, body: body.value }),
-    });
-
-    const data = await response.text(); // can be HTML or JSON
-
-    if (response.ok) {
-      message.value = 'Article submitted successfully!';
-      setTimeout(() => {
-        message.value = '';
-    }, 3000); // Clear after 3 seconds
-      messageColor.value = 'green';
-      title.value = '';
-      body.value = '';
+    if (ok) {
+        success.value = true;
+        message.value = 'Article submitted successfully!';
+        title.value = '';
+        body.value = '';
+        setTimeout(() => { message.value = ''; }, 3000);
     } else {
-      message.value = `Failed to submit article: ${data}`;
-      messageColor.value = 'red';
+        success.value = false;
+        message.value = data.error || 'Failed to submit article.';
     }
-  } catch (error) {
-    console.error('Error submitting article:', error);
-    message.value = 'Network or server error.';
-    messageColor.value = 'red';
-  }
 };
 </script>
+
+<style scoped>
+.error { color: red; }
+.success { color: green; }
+</style>

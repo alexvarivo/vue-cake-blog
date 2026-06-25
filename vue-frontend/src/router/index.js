@@ -25,8 +25,8 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/view/:id',
-    name: 'ViewArticle',
+    path: '/edit/:id',
+    name: 'EditArticle',
     component: ViewArticle,
     meta: { requiresAuth: true },
   },

@@ -92,7 +92,7 @@ class Application extends BaseApplication implements \Authentication\Authenticat
         });
 
         $middlewareQueue
-            ->add(new CorsMiddleware());
+            ->add(new CorsMiddleware())
             ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
             ->add(new AssetMiddleware([
                 'cacheTime' => Configure::read('Asset.cacheTime'),
@@ -134,7 +134,7 @@ class Application extends BaseApplication implements \Authentication\Authenticat
 
         // load authenticators
         $service->loadAuthenticator('Authentication.Jwt', [
-            'secretKey' => env('SECURITY_SALT', 'fallback_secret_key'),
+            'secretKey' => Security::getSalt(),
             'algorithm' => 'HS256',
             'header' => 'authorization',
             'tokenPrefix' => 'Bearer',

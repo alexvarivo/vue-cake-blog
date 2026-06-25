@@ -68,6 +68,11 @@ return function (RouteBuilder $routes): void {
             ->setMethods(['GET'])
             ->setPatterns(['id' => '\d+']);
 
+        $builder->connect('/articles/delete/:id', ['controller' => 'Articles', 'action' => 'delete'])
+            ->setPass(['id'])
+            ->setMethods(['DELETE'])
+            ->setPatterns(['id' => '\d+']);
+
         /*
          * Connect catchall routes for all controllers.
          *

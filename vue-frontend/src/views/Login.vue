@@ -6,48 +6,45 @@
       <input v-model="password" type="password" placeholder="Password" required />
       <button type="submit">Login</button>
     </form>
-    <p v-if="error" style="color: red">{{ error }}</p>
+    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      username: '',
-      password: '',
-      error: '',
-    };
-  },
-  methods: {
-    async handleLogin() {
-      try {
-        const response = await fetch('http://localhost:8081/users/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: this.username,
-            password: this.password,
-          }),
-        });
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { apiRequest } from '../api';
 
-        const data = await response.json();
+const emit = defineEmits(['logged-in']);
+const router = useRouter();
 
-        if (!response.ok) {
-          this.error = data.error || 'Login failed';
-          return;
-        }
+const username = ref('');
+const password = ref('');
+const error = ref('');
 
+const handleLogin = async () => {
+    error.value = '';
+    const { ok, data } = await apiRequest('/users/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: username.value, password: password.value }),
+    });
+
+    if (ok) {
         localStorage.setItem('token', data.token);
-        this.$emit('logged-in'); 
-        this.$router.push('/');
-      } catch (err) {
-        this.error = 'Something went wrong';
-        console.error(err);
-      }
-    },
-  },
+        emit('logged-in');
+        router.push('/');
+    } else {
+        error.value = data.error || 'Login failed';
+    }
 };
 </script>
+
+<style scoped>
+.login {
+    max-width: 400px;
+    margin: 60px auto;
+}
+.error {
+    color: red;
+}
+</style>

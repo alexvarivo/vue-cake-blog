@@ -14,21 +14,18 @@ class ArticlesController extends AppController
     {
         parent::initialize();
         $this->loadComponent('Authentication.Authentication');
-
-        // public access
         $this->Authentication->addUnauthenticatedActions(['index', 'view']);
     }
 
     // GET /articles
     public function index()
     {
+        $this->request->allowMethod(['get']);
         $articles = $this->Articles->find()->all();
 
-        $this->response = $this->response
+        return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode($articles));
-
-        return $this->response;
     }
 
     // GET /articles/:id
@@ -44,10 +41,10 @@ class ArticlesController extends AppController
                 ->withType('application/json')
                 ->withStringBody(json_encode(['error' => 'Article not found']));
         }
-    
+
         return $this->response
             ->withType('application/json')
-            ->withStringBody(json_encode(['article' => $article]));
+            ->withStringBody(json_encode($article));
     }
 
     // POST /articles/add
@@ -55,27 +52,48 @@ class ArticlesController extends AppController
     {
         $this->request->allowMethod(['post']);
 
-        $result = $this->Authentication->getResult();
-        if (!$result->isValid()) {
-            return $this->response
-                ->withStatus(401)
-                ->withType('application/json')
-                ->withStringBody(json_encode(['error' => 'Unauthorized']));
-        }
-
         $article = $this->Articles->newEmptyEntity();
         $article = $this->Articles->patchEntity($article, $this->request->getData());
 
         if ($this->Articles->save($article)) {
             return $this->response
+                ->withStatus(201)
                 ->withType('application/json')
-                ->withStringBody(json_encode(['message' => 'Article saved']));
+                ->withStringBody(json_encode(['message' => 'Article saved', 'article' => $article]));
         }
 
         return $this->response
-            ->withStatus(400)
+            ->withStatus(422)
             ->withType('application/json')
-            ->withStringBody(json_encode(['error' => 'Failed to save article']));
+            ->withStringBody(json_encode(['error' => 'Failed to save article', 'errors' => $article->getErrors()]));
+    }
+
+    // PUT /articles/edit/:id
+    public function edit($id = null)
+    {
+        $this->request->allowMethod(['put', 'patch']);
+
+        try {
+            $article = $this->Articles->get($id);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
+            return $this->response
+                ->withStatus(404)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Article not found']));
+        }
+
+        $article = $this->Articles->patchEntity($article, $this->request->getData());
+
+        if ($this->Articles->save($article)) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode(['message' => 'Article updated', 'article' => $article]));
+        }
+
+        return $this->response
+            ->withStatus(422)
+            ->withType('application/json')
+            ->withStringBody(json_encode(['error' => 'Failed to update article', 'errors' => $article->getErrors()]));
     }
 
     // DELETE /articles/:id
@@ -83,15 +101,15 @@ class ArticlesController extends AppController
     {
         $this->request->allowMethod(['delete']);
 
-        $result = $this->Authentication->getResult();
-        if (!$result->isValid()) {
+        try {
+            $article = $this->Articles->get($id);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             return $this->response
-                ->withStatus(401)
+                ->withStatus(404)
                 ->withType('application/json')
-                ->withStringBody(json_encode(['error' => 'Unauthorized']));
+                ->withStringBody(json_encode(['error' => 'Article not found']));
         }
 
-        $article = $this->Articles->get($id);
         if ($this->Articles->delete($article)) {
             return $this->response
                 ->withType('application/json')
