@@ -11,9 +11,10 @@ Full-stack blog app with a CakePHP 4 backend and Vue 3 frontend.
 ## Setup
 
 ### Backend
-1. Clone the repo and copy the env file:
+1. Clone the repo and copy the config files:
    ```bash
    cp .env.example .env
+   cp app/config/app_local.example.php app/config/app_local.php
    ```
 2. Start Docker:
    ```bash
@@ -21,8 +22,7 @@ Full-stack blog app with a CakePHP 4 backend and Vue 3 frontend.
    ```
 3. Run migrations:
    ```bash
-   docker compose exec app bash
-   bin/cake migrations migrate
+   docker compose exec app bin/cake migrations migrate
    ```
 4. Create a user through PhpMyAdmin at http://localhost:8083
 
